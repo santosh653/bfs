@@ -87,9 +87,15 @@ ALL_CFLAGS = $(ALL_CPPFLAGS) $(LOCAL_CFLAGS) $(CFLAGS) $(DEPFLAGS)
 ALL_LDFLAGS = $(ALL_CFLAGS) $(LOCAL_LDFLAGS) $(LDFLAGS)
 ALL_LDLIBS = $(LOCAL_LDLIBS) $(LDLIBS)
 
+ALL := bfs tests/mksock tests/trie tests/xtimegm
+
+ifeq ($(OS),Linux)
+ALL += tests/liboomify.so tests/oomify
+endif
+
 default: bfs
 
-all: bfs tests/mksock tests/trie tests/xtimegm
+all: $(ALL)
 
 bfs: \
     bftw.o \
@@ -130,6 +136,14 @@ tests/trie: trie.o tests/trie.o
 	$(CC) $(ALL_LDFLAGS) $^ -o $@
 
 tests/xtimegm: time.o tests/xtimegm.o
+	$(CC) $(ALL_LDFLAGS) $^ -o $@
+
+tests/liboomify.so: tests/oominject.o
+	$(CC) $(ALL_LDFLAGS) -shared $^ -o $@
+
+tests/oominject.o: LOCAL_CFLAGS += -fPIC
+
+tests/oomify: bftw.o darray.o dstring.o mtab.o spawn.o stat.o trie.o util.o tests/oomify.o
 	$(CC) $(ALL_LDFLAGS) $^ -o $@
 
 %.o: %.c

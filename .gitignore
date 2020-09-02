@@ -1,6 +1,8 @@
 *.o
 *.d
 /bfs
+/tests/liboomify.so
 /tests/mksock
+/tests/oomify
 /tests/trie
 /tests/xtimegm
