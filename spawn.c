@@ -28,6 +28,7 @@
  * Types of spawn actions.
  */
 enum bfs_spawn_op {
+	BFS_SPAWN_OPENAT,
 	BFS_SPAWN_CLOSE,
 	BFS_SPAWN_DUP2,
 	BFS_SPAWN_FCHDIR,
@@ -42,6 +43,9 @@ struct bfs_spawn_action {
 	enum bfs_spawn_op op;
 	int in_fd;
 	int out_fd;
+	const char *path;
+	int flags;
+	mode_t mode;
 };
 
 int bfs_spawn_init(struct bfs_spawn *ctx) {
@@ -79,6 +83,29 @@ static struct bfs_spawn_action *bfs_spawn_add(struct bfs_spawn *ctx, enum bfs_sp
 		ctx->tail = &action->next;
 	}
 	return action;
+}
+
+int bfs_spawn_addopen(struct bfs_spawn *ctx, const char *path, int flags, mode_t mode, int fd) {
+	return bfs_spawn_addopenat(ctx, AT_FDCWD, path, flags, mode, fd);
+}
+
+int bfs_spawn_addopenat(struct bfs_spawn *ctx, int dirfd, const char *path, int flags, mode_t mode, int fd) {
+	if ((dirfd != AT_FDCWD && dirfd < 0) || fd < 0) {
+		errno = EBADF;
+		return -1;
+	}
+
+	struct bfs_spawn_action *action = bfs_spawn_add(ctx, BFS_SPAWN_OPENAT);
+	if (action) {
+		action->in_fd = dirfd;
+		action->out_fd = fd;
+		action->path = path;
+		action->flags = flags;
+		action->mode = mode;
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 int bfs_spawn_addclose(struct bfs_spawn *ctx, int fd) {
@@ -140,7 +167,7 @@ static int bfs_execvpe(const char *exe, char **argv, char **envp) {
 
 /** Actually exec() the new process. */
 static void bfs_spawn_exec(const char *exe, const struct bfs_spawn *ctx, char **argv, char **envp, int pipefd[2]) {
-	int error;
+	int fd, error;
 	enum bfs_spawn_flags flags = ctx ? ctx->flags : 0;
 	const struct bfs_spawn_action *actions = ctx ? ctx->actions : NULL;
 
@@ -149,7 +176,7 @@ static void bfs_spawn_exec(const char *exe, const struct bfs_spawn *ctx, char **
 	for (const struct bfs_spawn_action *action = actions; action; action = action->next) {
 		// Move the error-reporting pipe out of the way if necessary...
 		if (action->out_fd == pipefd[1]) {
-			int fd = dup_cloexec(pipefd[1]);
+			fd = dup_cloexec(pipefd[1]);
 			if (fd < 0) {
 				goto fail;
 			}
@@ -164,6 +191,19 @@ static void bfs_spawn_exec(const char *exe, const struct bfs_spawn *ctx, char **
 		}
 
 		switch (action->op) {
+		case BFS_SPAWN_OPENAT:
+			fd = openat(action->in_fd, action->path, action->flags, action->mode);
+			if (fd < 0) {
+				goto fail;
+			} else if (fd != action->out_fd) {
+				if (dup2(fd, action->out_fd) < 0) {
+					goto fail;
+				}
+				if (close(fd) != 0) {
+					goto fail;
+				}
+			}
+			break;
 		case BFS_SPAWN_CLOSE:
 			if (close(action->out_fd) != 0) {
 				goto fail;

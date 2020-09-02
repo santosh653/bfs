@@ -64,6 +64,20 @@ int bfs_spawn_destroy(struct bfs_spawn *ctx);
 int bfs_spawn_setflags(struct bfs_spawn *ctx, enum bfs_spawn_flags flags);
 
 /**
+ * Add an open() action to a bfs_spawn() context.
+ *
+ * @return 0 on success, -1 on failure.
+ */
+int bfs_spawn_addopen(struct bfs_spawn *ctx, const char *path, int flags, mode_t mode, int fd);
+
+/**
+ * Add an openat() action to a bfs_spawn() context.
+ *
+ * @return 0 on success, -1 on failure.
+ */
+int bfs_spawn_addopenat(struct bfs_spawn *ctx, int dirfd, const char *path, int flags, mode_t mode, int fd);
+
+/**
  * Add a close() action to a bfs_spawn() context.
  *
  * @return 0 on success, -1 on failure.
