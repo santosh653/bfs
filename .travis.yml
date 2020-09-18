@@ -19,7 +19,7 @@ addons:
 matrix:
   include:
     - os: linux
-    arch: ppc64le
+    - arch: ppc64le
        
       dist: xenial
       before_script:
