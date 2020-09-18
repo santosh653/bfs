@@ -19,6 +19,7 @@ addons:
 matrix:
   include:
     - os: linux
+      arch: ppc64le   
       dist: xenial
       before_script:
         # Ubuntu doesn't let you install the -dev packages for both amd64 and
