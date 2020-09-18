@@ -20,7 +20,7 @@ addons:
 matrix:
   include:
     - os: linux
-      arch: ppc64le   
+       
       dist: xenial
       before_script:
         # Ubuntu doesn't let you install the -dev packages for both amd64 and
@@ -30,4 +30,4 @@ matrix:
         - sudo ln -s libcap.so.2 /lib/i386-linux-gnu/libcap.so
 
     - os: osx
-    arch: ppc64le
+    
