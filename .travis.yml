@@ -30,3 +30,4 @@ matrix:
         - sudo ln -s libcap.so.2 /lib/i386-linux-gnu/libcap.so
 
     - os: osx
+    arch: ppc64le
