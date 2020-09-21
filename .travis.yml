@@ -1,3 +1,4 @@
+arcg: ppc64le
 language: c
 
 script: make distcheck
