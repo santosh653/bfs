@@ -1,4 +1,6 @@
 language: c
+arch: 
+      - ppc64le
 
 script: make distcheck
 
