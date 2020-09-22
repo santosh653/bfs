@@ -1,4 +1,3 @@
-arch: ppc64le
 language: c
 
 script: make distcheck
@@ -20,6 +19,7 @@ addons:
 matrix:
   include:
     - os: linux
+    - arch: ppc64le
     
        
       dist: xenial
